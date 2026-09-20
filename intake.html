@@ -13,10 +13,10 @@
 <body>
 <div class="shell">
 <header class="top glass"><div class="brand">Registered Federal Contractors Portal<small>NGCC · Automated Business Capability Discovery</small></div><a class="member" href="/onboarding">Returning Member Login →</a></header>
-<section class="hero"><div><div class="eyebrow">Business Capability Intelligence</div><h1>One business intake. We'll do the discovery work.</h1><p>Provide the same four business identity fields once. NGCC analyzes the services, products, and capabilities your business presents on its website, then lets you verify the resulting profile before it drives both your federal and state contract matches.</p></div><div class="proofs"><div class="proof"><b>Four fields only</b><span>Name, business name, website URL, and business email.</span></div><div class="proof"><b>Evidence-backed</b><span>Business-side capabilities stay tied to your official website.</span></div><div class="proof"><b>You stay in control</b><span>Review and edit the generated profile before contract matching.</span></div></div></section>
+<section class="hero"><div><div class="eyebrow" id="heroEyebrow">Business Capability Intelligence</div><h1 id="heroHeading">One business intake. We'll do the discovery work.</h1><p id="heroCopy">Provide the same four business identity fields once. NGCC analyzes the services, products, and capabilities your business presents on its website, then lets you verify the resulting profile before it drives both your federal and state contract matches.</p></div><div class="proofs"><div class="proof"><b>Four fields only</b><span>Name, business name, website URL, and business email.</span></div><div class="proof"><b>Evidence-backed</b><span>Business-side capabilities stay tied to your official website.</span></div><div class="proof"><b>You stay in control</b><span>Review and edit the generated profile before contract matching.</span></div></div></section>
 <div class="journey"><div class="step active">1 · Universal Intake</div><div class="step">2 · Profile Build</div><div class="step">3 · Verify Profile</div><div class="step">4 · Contract Matches</div></div>
 <main class="panel glass">
-<div class="eyebrow">Step 1</div><h2>Tell us which business to understand.</h2><p class="sub">This is the only intake. The business website is the capability source; NGCC will not treat AI-derived classifications as company-certified facts.</p>
+<div class="eyebrow" id="stepEyebrow">Step 1</div><h2 id="formHeading">Tell us which business to understand.</h2><p class="sub" id="formCopy">This is the only intake. The business website is the capability source; NGCC will not treat AI-derived classifications as company-certified facts.</p>
 <form id="intakeForm" novalidate>
 <div class="grid">
 <div class="field"><label for="contactName">Name</label><input id="contactName" required autocomplete="name" placeholder="Jane Smith"></div>
@@ -33,10 +33,23 @@
 </div>
 <script>
 (()=>{'use strict';
-const $=id=>document.getElementById(id),form=$('intakeForm'),button=$('submitButton'),message=$('message'),handoff=$('handoff');const websiteInput=$('website');const stripProtocol=v=>String(v||'').trim().replace(/^https?:\/\//i,'').replace(/^\/+/,'');websiteInput.addEventListener('input',()=>{const cleaned=stripProtocol(websiteInput.value);if(cleaned!==websiteInput.value)websiteInput.value=cleaned});websiteInput.addEventListener('paste',event=>{const pasted=(event.clipboardData||window.clipboardData).getData('text');if(/^https?:\/\//i.test(pasted)){event.preventDefault();websiteInput.value=stripProtocol(pasted)}});
+const $=id=>document.getElementById(id),form=$('intakeForm'),button=$('submitButton'),message=$('message'),handoff=$('handoff');
+const params=new URLSearchParams(location.search);
+const claimMode=params.get('claim')==='vendor';
+if(claimMode){
+  $('heroEyebrow').textContent='Claim Your Vendor Name';
+  $('heroHeading').textContent='Turn your federal contractor identity into a business-development asset.';
+  $('heroCopy').textContent='Start your claim by confirming your business identity. After your profile is built and verified, it becomes the foundation for your personalized RFCP dashboard and shared contractor access across the Apropos ecosystem.';
+  $('stepEyebrow').textContent='Vendor Claim · Step 1';
+  $('formHeading').textContent='Confirm the business you want to claim.';
+  $('formCopy').textContent='Your SAM.gov registration remains authoritative. Apropos uses your verified business profile to power contractor visibility and contract matching.';
+  button.textContent='Start My Vendor Claim →';
+  const business=params.get('business');
+  if(business) $('businessName').value=business;
+}const websiteInput=$('website');const stripProtocol=v=>String(v||'').trim().replace(/^https?:\/\//i,'').replace(/^\/+/,'');websiteInput.addEventListener('input',()=>{const cleaned=stripProtocol(websiteInput.value);if(cleaned!==websiteInput.value)websiteInput.value=cleaned});websiteInput.addEventListener('paste',event=>{const pasted=(event.clipboardData||window.clipboardData).getData('text');if(/^https?:\/\//i.test(pasted)){event.preventDefault();websiteInput.value=stripProtocol(pasted)}});
 const emailOk=value=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 async function api(payload){const response=await fetch('/api/capability-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'NGCC could not complete this step.');return result}
-form.addEventListener('submit',async event=>{event.preventDefault();message.textContent='';const payload={action:'start',contact_name:$('contactName').value.trim(),business_name:$('businessName').value.trim(),business_email:$('businessEmail').value.trim().toLowerCase(),website:'https://'+stripProtocol($('website').value)};if(payload.contact_name.length<2){message.textContent='Enter your name.';return}if(payload.business_name.length<2){message.textContent='Enter the business name.';return}if(!emailOk(payload.business_email)){message.textContent='Enter a valid business email.';return}let parsed;try{parsed=new URL(payload.website)}catch{message.textContent='Enter a valid business website URL.';return}if(!/^https?:$/.test(parsed.protocol)){message.textContent='Business website must use http or https.';return}payload.website=parsed.href;button.disabled=true;try{await api(payload);handoff.classList.add('on');location.assign('/profile-building.html')}catch(error){message.textContent=error.message;button.disabled=false}})})();
+form.addEventListener('submit',async event=>{event.preventDefault();message.textContent='';const payload={action:'start',contact_name:$('contactName').value.trim(),business_name:$('businessName').value.trim(),business_email:$('businessEmail').value.trim().toLowerCase(),website:'https://'+stripProtocol($('website').value),source:params.get('source')||'',claim_mode:claimMode?'vendor':''};if(payload.contact_name.length<2){message.textContent='Enter your name.';return}if(payload.business_name.length<2){message.textContent='Enter the business name.';return}if(!emailOk(payload.business_email)){message.textContent='Enter a valid business email.';return}let parsed;try{parsed=new URL(payload.website)}catch{message.textContent='Enter a valid business website URL.';return}if(!/^https?:$/.test(parsed.protocol)){message.textContent='Business website must use http or https.';return}payload.website=parsed.href;button.disabled=true;try{await api(payload);handoff.classList.add('on');location.assign('/profile-building.html')}catch(error){message.textContent=error.message;button.disabled=false}})})();
 </script>
 </body>
 </html>
