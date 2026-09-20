@@ -296,7 +296,6 @@ async function start(req, payload) {
     visitor_email: visitorEmail || null,
     canonical_domain: website.canonical_domain,
     discovery_status: 'intake_created',
-    claim_status: claimMode === 'vendor' ? 'claim_initiated' : null,
     draft_profile: {},
     discovery_evidence: [],
     verified_profile: {},
