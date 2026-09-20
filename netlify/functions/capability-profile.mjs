@@ -269,13 +269,16 @@ async function start(req, payload) {
   const website = normalizeWebsite(payload.website);
   const issued = issueProfileSession();
   const now = nowIso();
+  const requestedSource = safe(payload.source, 80);
+  const claimMode = safe(payload.claim_mode, 40);
   const intakePayload = {
     contact_name: contactName,
     business_name: businessName,
     business_email: businessEmail,
     website: website.website,
     visitor_email: visitorEmail || null,
-    source: 'ngcc-website-capability-intake-v1',
+    source: requestedSource || 'ngcc-website-capability-intake-v1',
+    claim_mode: claimMode || null,
     started_at: now,
   };
   const rows = await db('natcorp_business_intakes', 'POST', '', [{
@@ -293,6 +296,7 @@ async function start(req, payload) {
     visitor_email: visitorEmail || null,
     canonical_domain: website.canonical_domain,
     discovery_status: 'intake_created',
+    claim_status: claimMode === 'vendor' ? 'claim_initiated' : null,
     draft_profile: {},
     discovery_evidence: [],
     verified_profile: {},
