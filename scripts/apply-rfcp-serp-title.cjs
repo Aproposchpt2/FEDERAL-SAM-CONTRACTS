@@ -1,21 +1,19 @@
 'use strict';
 const fs = require('fs');
-
 const file = 'index.html';
 let html = fs.readFileSync(file, 'utf8');
-const title = 'Federal Contract Portal | Government Contract Opportunities';
-const canonical = 'https://federalcontractorportal.aproposgroupllc.com/';
-
-function replaceOne(pattern, replacement, label) {
-  if (!pattern.test(html)) throw new Error(`[rfcp-serp-title] missing ${label}`);
-  html = html.replace(pattern, replacement);
+const oldTitle = 'Federal + State Contract Opportunities for Registered Contractors | Registered Federal Contractors Portal';
+const newTitle = 'Federal + State Contracts | Registered Federal Contractors Portal';
+for (const marker of [
+  `<title>${oldTitle}</title>`,
+  `<meta property="og:title" content="${oldTitle}">`,
+  `<meta name="twitter:title" content="${oldTitle}">`
+]) {
+  if (!html.includes(marker)) throw new Error(`[rfcp-serp-title] expected controlled Federal + State marker missing: ${marker}`);
 }
-
-replaceOne(/<title>[^<]*<\/title>/i, `<title>${title}</title>`, 'title');
-replaceOne(/<meta property="og:title" content="[^"]*">/i, `<meta property="og:title" content="${title}">`, 'Open Graph title');
-replaceOne(/<meta name="twitter:title" content="[^"]*">/i, `<meta name="twitter:title" content="${title}">`, 'Twitter title');
-replaceOne(/<link rel="canonical" href="[^"]*">/i, `<link rel="canonical" href="${canonical}">`, 'canonical');
-replaceOne(/<meta property="og:url" content="[^"]*">/i, `<meta property="og:url" content="${canonical}">`, 'Open Graph URL');
-
+html = html
+  .replace(`<title>${oldTitle}</title>`, `<title>${newTitle}</title>`)
+  .replace(`<meta property="og:title" content="${oldTitle}">`, `<meta property="og:title" content="${newTitle}">`)
+  .replace(`<meta name="twitter:title" content="${oldTitle}">`, `<meta name="twitter:title" content="${newTitle}">`);
 fs.writeFileSync(file, html, 'utf8');
-console.log('[rfcp-serp-title] PASS — homepage title, social metadata, and self-referencing canonical applied');
+console.log('[rfcp-serp-title] PASS — concise Federal + State homepage title applied to title/OG/Twitter metadata');
